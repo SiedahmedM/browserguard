@@ -26,21 +26,20 @@ Before publishing a release:
 * Record review results in WORKLOG.md.
 * Obtain maintainer approval for any npm publication. GitHub source publication does not publish a registry package.
 
-## 0.1.0 assessment
-
-Superseded by 0.1.1, which closes a late-callback deadline edge case and hardens diagnostic property reads. The following records the initial release checks.
+## 0.1.1 assessment
 
 GO for public source release with the documented direct-child cleanup boundary. No unresolved release blockers were found. npm registry publication remains a separate decision.
 
-The implementation is 578 TypeScript lines across seven files, with zero runtime dependencies. [The initial complete CI run](https://github.com/SiedahmedM/browserguard/actions/runs/37727697739) passed linting, type checking, coverage tests, the synthetic example, and package checks on all three platforms:
+The implementation is 601 TypeScript lines across seven files, with zero runtime dependencies. [The patch CI run](https://github.com/SiedahmedM/browserguard/actions/runs/37728728856) passed linting, type checking, coverage tests, the synthetic example, and package checks on all three platforms. Version 0.1.1 includes monotonic deadline enforcement and a diagnostic-getter fix discovered during the final review; it supersedes 0.1.0.
 
 | Check | Result |
 | --- | --- |
-| Linux / Node 24 | 74 tests passed, including real SIGTERM escalation |
-| macOS / Node 24 | 74 tests passed, including real SIGTERM escalation |
-| Windows / Node 24 | 73 passed; one real POSIX-only test skipped; deterministic escalation passed |
+| Linux / Node 24 | 83 tests passed, including real SIGTERM escalation |
+| macOS / Node 24 | 83 tests passed, including real SIGTERM escalation |
+| Windows / Node 24 | 82 passed; one real POSIX-only test skipped; deterministic escalation passed |
 | Local Chrome example | Readiness, direct-child shutdown, and temporary-directory removal passed |
-| Package consumer | Clean tarball install, ESM API, TypeScript declarations, and lifecycle checks passed |
+| Package consumer | Clean tarball install, README example, ESM API, TypeScript declarations, and lifecycle checks passed |
+| Implementation coverage | 99.43% lines; at least 94.88% branches across the three CI platforms |
 | Dependencies | npm audit reported zero vulnerabilities |
 | Secrets | Gitleaks 8.30.1 reported no findings in staged content or complete Git history |
 | Provenance | Fresh root commit, no imported parent history, no object alternates or private remote |

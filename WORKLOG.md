@@ -48,3 +48,9 @@ Published the repository and 0.1.0 GitHub release after the private CI passed. V
 Final review identified a callback ordering gap: a callback could finish after its budget while an expired Node timer had not run yet. Added monotonic deadline checks before callback invocation, on callback settlement, and before declaring startup healthy. Startup and shutdown also count time spent in observers against their budgets. These checks reject late results; they still cannot interrupt a blocked event loop. Eight deterministic regressions cover delayed invocation, late success, late rejection, health timeout, startup readiness, late spawn, and delayed observers. Preparing a patch release without changing the original public tag.
 
 The diagnostic review also found that reading an error-code getter repeatedly could validate one value and return a different one. The sanitizer now snapshots the property once before allowlisting it, with a regression proving a changing getter cannot inject an unchecked diagnostic value. Patch verification now covers 83 tests.
+
+## Final patch verification
+
+[CI run 37728728856](https://github.com/SiedahmedM/browserguard/actions/runs/37728728856) passed all four jobs for the 0.1.1 implementation. Linux and macOS pass all 83 tests; Windows passes 82 and skips only real POSIX signal escalation. Measured implementation coverage is 99.43% of lines and at least 94.88% of branches. Package checks execute the README quick start against the installed tarball on all three platforms.
+
+The package remains 18 files with zero runtime dependencies; the production implementation is 601 TypeScript lines. Full-history Gitleaks and npm audit remain clean. The local identifier, link, and reference-block comparison passed again. No unresolved implementation or publication blockers remain. GO for 0.1.1 source release; retain the original 0.1.0 tag, publish the corrected package as 0.1.1, and keep npm registry publication separate.
