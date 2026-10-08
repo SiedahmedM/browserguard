@@ -34,6 +34,7 @@ export class SupervisorCore implements BrowserSession {
   private closing: ReturnType<typeof deferred<void>> | undefined;
   private readonly timers = new Set<unknown>();
   private startupTimer: unknown;
+  private startupDeadline: number | undefined;
   private healthCheck: LaunchOptions['healthCheck'];
   private probe: BoundedTask<boolean> | undefined;
   private operation: BoundedTask<unknown> | undefined;
@@ -77,6 +78,8 @@ export class SupervisorCore implements BrowserSession {
     validateLaunch(options);
     this.healthCheck = options.healthCheck;
     this.launchSignal = options.signal;
+    const startupDeadline = this.runtime.clock.now() + this.settings.startupTimeoutMs;
+    this.startupDeadline = startupDeadline;
     this.transition('starting');
     // An observer may close the supervisor during the transition.
     if (!this.active()) return this;
@@ -84,7 +87,7 @@ export class SupervisorCore implements BrowserSession {
     if (this.launchSignal?.aborted) { this.onCancellation(); return this; }
     this.startupTimer = this.schedule(() => this.fail(new TimeoutError({
       phase: 'startup', timeoutMs: this.settings.startupTimeoutMs, ...this.pidContext(),
-    })), this.settings.startupTimeoutMs);
+    })), Math.max(0, startupDeadline - this.runtime.clock.now()));
     try {
       this.child = this.runtime.spawn(options);
       this.childId = this.child.pid;
@@ -129,6 +132,7 @@ export class SupervisorCore implements BrowserSession {
 
   close(): Promise<void> {
     if (this.closing) return this.closing.promise;
+    const closeStartedAt = this.runtime.clock.now();
     this.closing = deferred<void>();
     if (this.finished) {
       if (this.cleanupError) this.closing.reject(this.cleanupError);
@@ -156,8 +160,8 @@ export class SupervisorCore implements BrowserSession {
       this.failure ??= this.cleanupError;
       try { this.child?.unref(); } catch { /* Failure is reported by the result. */ }
       this.finish(false);
-    }, this.settings.shutdownTimeoutMs);
-    this.schedule(() => this.sendSignal('SIGKILL'), this.settings.gracefulShutdownMs);
+    }, Math.max(0, closeStartedAt + this.settings.shutdownTimeoutMs - this.runtime.clock.now()));
+    this.schedule(() => this.sendSignal('SIGKILL'), Math.max(0, closeStartedAt + this.settings.gracefulShutdownMs - this.runtime.clock.now()));
     this.sendSignal('SIGTERM');
     return this.closing.promise;
   }
@@ -173,6 +177,7 @@ export class SupervisorCore implements BrowserSession {
   private readonly onSpawn = (): void => {
     this.spawned = true;
     if (!this.active()) return;
+    if (this.startupExpired()) return;
     if (this.healthCheck) this.checkHealth();
     else this.markHealthy();
   };
@@ -233,13 +238,21 @@ export class SupervisorCore implements BrowserSession {
 
   private markHealthy(): void {
     if (!this.active()) return;
+    if (this.startupExpired()) return;
     this.failures = 0;
     this.healthError = undefined;
     this.initialReady = true;
     this.clearTimer(this.startupTimer);
     this.startupTimer = undefined;
+    this.startupDeadline = undefined;
     this.ready.resolve();
     this.transition('healthy');
+  }
+
+  private startupExpired(): boolean {
+    if (this.startupDeadline === undefined || this.runtime.clock.now() < this.startupDeadline) return false;
+    this.fail(new TimeoutError({ phase: 'startup', timeoutMs: this.settings.startupTimeoutMs, ...this.pidContext() }));
+    return true;
   }
 
   private noteHealthFailure(error: HealthCheckError): void {
@@ -285,6 +298,7 @@ export class SupervisorCore implements BrowserSession {
     for (const timer of this.timers) this.runtime.clock.clearTimeout(timer);
     this.timers.clear();
     this.startupTimer = undefined;
+    this.startupDeadline = undefined;
     this.launchSignal?.removeEventListener('abort', this.onCancellation);
     this.launchSignal = undefined;
     this.probe?.cancel(reason);

@@ -6,26 +6,27 @@ export async function flush() {
 }
 
 export class ManualClock {
-  now = 0;
+  time = 0;
+  now = () => this.time;
   next = 0;
   timers = new Map();
   setTimeout = (callback, ms) => {
     const id = ++this.next;
-    this.timers.set(id, { at: this.now + ms, callback });
+    this.timers.set(id, { at: this.time + ms, callback });
     return id;
   };
   clearTimeout = id => { this.timers.delete(id); };
   async advance(ms) {
-    const target = this.now + ms;
+    const target = this.time + ms;
     for (;;) {
       await flush();
       const entry = [...this.timers.entries()].sort((a, b) => a[1].at - b[1].at || a[0] - b[0])[0];
       if (!entry || entry[1].at > target) break;
-      this.now = entry[1].at;
+      this.time = Math.max(this.time, entry[1].at);
       this.timers.delete(entry[0]);
       entry[1].callback();
     }
-    this.now = target;
+    this.time = Math.max(this.time, target);
     await flush();
   }
 }

@@ -35,7 +35,9 @@ State transitions are checked against an explicit adjacency table. A transition 
 
 ## Deadlines and cancellation
 
-The clock is used for bounded timers rather than an interval loop. Each successful or failed health callback schedules the next check only after it settles. Failure counts saturate at the configured threshold.
+The monotonic clock is used for bounded timers rather than an interval loop. Deadline checks also run before invoking a callback and when accepting its result, so a late result cannot win merely because Node has not processed an expired timer yet. Startup readiness has the same guard. Time spent in observers consumes the startup and shutdown budgets.
+
+Each successful or failed health callback schedules the next check only after it settles. Failure counts saturate at the configured threshold.
 
 A deadline settles the library's wait and aborts the callback signal. It cannot terminate JavaScript. A timed-out health check ends supervision, so an abandoned callback is never followed by an overlapping probe. Late completion and rejection handlers remain attached and cannot revive a terminal session.
 

@@ -11,7 +11,7 @@ TypeScript, Node.js 24 or later, ESM, no runtime dependencies.
 Install the GitHub release package:
 
 ```sh
-npm install https://github.com/SiedahmedM/browserguard/releases/download/v0.1.0/browserguard-0.1.0.tgz
+npm install https://github.com/SiedahmedM/browserguard/releases/download/v0.1.1/browserguard-0.1.1.tgz
 ```
 
 No npm registry release has been published. To build and inspect the source instead:
@@ -25,7 +25,7 @@ npm run example
 npm pack
 ```
 
-You can also install the locally built package with `npm install /path/to/browserguard-0.1.0.tgz`. TypeScript consumers should have Node.js types installed.
+You can also install the locally built package with `npm install /path/to/browserguard-0.1.1.tgz`. TypeScript consumers should have Node.js types installed.
 
 This example runs an ordinary Node child, so it works without an installed browser:
 

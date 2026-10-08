@@ -28,6 +28,8 @@ Before publishing a release:
 
 ## 0.1.0 assessment
 
+Superseded by 0.1.1, which closes a late-callback deadline edge case and hardens diagnostic property reads. The following records the initial release checks.
+
 GO for public source release with the documented direct-child cleanup boundary. No unresolved release blockers were found. npm registry publication remains a separate decision.
 
 The implementation is 578 TypeScript lines across seven files, with zero runtime dependencies. [The initial complete CI run](https://github.com/SiedahmedM/browserguard/actions/runs/37727697739) passed linting, type checking, coverage tests, the synthetic example, and package checks on all three platforms:

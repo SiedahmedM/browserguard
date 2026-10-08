@@ -40,3 +40,11 @@ The new GitHub repository was created privately. Next: commit the independent im
 The root commit is 12587b5a9888e3d8df0565f4da67bb4a9ce48dad with no parents. Git has no object alternates or shallow boundary, and its only remote is this project's repository. Author metadata uses the maintainer's GitHub noreply address.
 
 Final scope review: 578 production TypeScript lines, zero runtime dependencies, and none of the excluded browser/agent/persistence capabilities. GO for public source publication with the documented cleanup and platform limits. Added a package test that extracts and executes the README quick start to prevent example drift. The GitHub release will include the buildable source and an installable tarball; no npm registry publication is requested.
+
+## Public release and deadline follow-up
+
+Published the repository and 0.1.0 GitHub release after the private CI passed. Verified anonymous README access, MIT license detection, enabled private vulnerability reporting, and successful installation/execution from the public release tarball. npm remains unpublished.
+
+Final review identified a callback ordering gap: a callback could finish after its budget while an expired Node timer had not run yet. Added monotonic deadline checks before callback invocation, on callback settlement, and before declaring startup healthy. Startup and shutdown also count time spent in observers against their budgets. These checks reject late results; they still cannot interrupt a blocked event loop. Eight deterministic regressions cover delayed invocation, late success, late rejection, health timeout, startup readiness, late spawn, and delayed observers. Preparing a patch release without changing the original public tag.
+
+The diagnostic review also found that reading an error-code getter repeatedly could validate one value and return a different one. The sanitizer now snapshots the property once before allowlisting it, with a regression proving a changing getter cannot inject an unchecked diagnostic value. Patch verification now covers 83 tests.

@@ -47,8 +47,10 @@ export class InvalidStateError extends BrowserGuardError {
 const SYSTEM_CODES = new Set(['ENOENT', 'EACCES', 'EPERM', 'EAGAIN', 'EMFILE', 'ENFILE', 'ENOMEM', 'ESRCH', 'ETIMEDOUT', 'ECONNREFUSED', 'ECONNRESET']);
 export function systemContext(error: unknown): Pick<ErrorContext, 'systemCode'> {
   try {
-    if (typeof error === 'object' && error !== null && 'code' in error
-      && typeof error.code === 'string' && SYSTEM_CODES.has(error.code)) return { systemCode: error.code };
+    if (typeof error === 'object' && error !== null && 'code' in error) {
+      const code = error.code;
+      if (typeof code === 'string' && SYSTEM_CODES.has(code)) return { systemCode: code };
+    }
   } catch { /* Even error property getters belong to the caller. */ }
   return {};
 }

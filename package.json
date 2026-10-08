@@ -1,6 +1,6 @@
 {
   "name": "browserguard",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Owned child-process supervision with health checks, deadlines, and bounded shutdown.",
   "type": "module",
   "license": "MIT",

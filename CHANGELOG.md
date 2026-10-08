@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.1
+
+* Check monotonic deadlines before callback invocation and when accepting results. Late startup, health, and operation results can no longer bypass an expired timer waiting in Node's event loop.
+* Count synchronous observer time against startup and shutdown budgets.
+* Snapshot OS error codes before allowlisting, so a mutable property getter cannot substitute an unchecked value.
+* Add deterministic regressions for delayed invocation, late settlement, delayed observers, and diagnostic getters.
+
 ## 0.1.0
 
 Initial source release.

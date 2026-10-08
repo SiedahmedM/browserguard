@@ -18,6 +18,7 @@ export function boundedTask<T>(
 ): BoundedTask<T> {
   const result = deferred<T>();
   const controller = new AbortController();
+  const deadline = clock.now() + timeoutMs;
   let settled = false;
   const release = (): void => {
     clock.clearTimeout(timer);
@@ -36,14 +37,17 @@ export function boundedTask<T>(
   if (external?.signal.aborted) onAbort();
   void Promise.resolve().then(() => {
     if (settled) return;
+    if (clock.now() >= deadline) { cancel(timeoutError); return; }
     return work(controller.signal);
   }).then(value => {
     if (settled) return;
+    if (clock.now() >= deadline) { cancel(timeoutError); return; }
     settled = true;
     release();
     result.resolve(value as T);
   }, error => {
     if (settled) return;
+    if (clock.now() >= deadline) { cancel(timeoutError); return; }
     settled = true;
     release();
     result.reject(mapError(error));

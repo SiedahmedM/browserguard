@@ -585,3 +585,79 @@ test('diagnostic context and final results cannot be mutated', async () => {
   assert.equal(Object.isFrozen(result.error.context), true);
   assert.throws(() => { result.error.context.exitCode = 0; }, TypeError);
 });
+
+test('a callback that returns after its deadline cannot beat a delayed timer', async () => {
+  const h = harness(); h.supervisor.launch({ command: 'synthetic' }); h.child.start();
+  const work = h.supervisor.run(() => { h.clock.time += 21; return 'too late'; });
+  await assert.rejects(work, TimeoutError);
+  assert.equal(h.supervisor.state, 'failed'); assertReleased(assert, h);
+});
+
+test('an operation whose invocation was delayed past its deadline is never called', async () => {
+  const h = harness(); let calls = 0;
+  h.supervisor.launch({ command: 'synthetic' }); h.child.start();
+  const work = h.supervisor.run(() => { calls++; return true; });
+  h.clock.time += 20;
+  await assert.rejects(work, TimeoutError);
+  assert.equal(calls, 0); assertReleased(assert, h);
+});
+
+test('a late rejected operation reports its expired deadline instead of the callback error', async () => {
+  const h = harness(); h.supervisor.launch({ command: 'synthetic' }); h.child.start();
+  const work = h.supervisor.run(() => { h.clock.time += 20; throw new Error('late private error'); });
+  await assert.rejects(work, TimeoutError); assertReleased(assert, h);
+});
+
+test('late health success cannot bypass the health timeout', async () => {
+  const h = harness();
+  h.supervisor.launch({ command: 'synthetic', healthCheck: () => { h.clock.time += 20; return true; } }); h.child.start();
+  await assert.rejects(h.supervisor.waitUntilHealthy(), error => error instanceof TimeoutError && error.context.phase === 'health');
+  assert.equal(h.supervisor.state, 'failed'); assertReleased(assert, h);
+});
+
+test('late health success cannot bypass the shorter startup deadline', async () => {
+  const h = harness({ startupTimeoutMs: 10, healthCheckTimeoutMs: 20 });
+  h.supervisor.launch({ command: 'synthetic', healthCheck: () => { h.clock.time += 10; return true; } }); h.child.start();
+  await assert.rejects(h.supervisor.waitUntilHealthy(), error => error instanceof TimeoutError && error.context.phase === 'startup');
+  assert.equal(h.supervisor.state, 'failed'); assertReleased(assert, h);
+});
+
+test('a late spawn event cannot bypass the startup deadline without a probe', async () => {
+  const h = harness(); h.supervisor.launch({ command: 'synthetic' });
+  h.clock.time += 100; h.child.start();
+  await assert.rejects(h.supervisor.waitUntilHealthy(), error => error instanceof TimeoutError && error.context.phase === 'startup');
+  assertReleased(assert, h);
+});
+
+test('time spent in the starting observer consumes the startup budget', async () => {
+  let clock;
+  const h = harness({ onStateChange: event => { if (event.to === 'starting') clock.time += 60; } }); clock = h.clock;
+  h.supervisor.launch({ command: 'synthetic', healthCheck: () => false }); h.child.start();
+  await clock.advance(39); assert.notEqual(h.supervisor.state, 'failed');
+  await clock.advance(1);
+  await assert.rejects(h.supervisor.waitUntilHealthy(), TimeoutError);
+  assert.equal(clock.now(), 100); assertReleased(assert, h);
+});
+
+test('time spent in the stopping observer consumes grace and the total shutdown budget', async () => {
+  let clock;
+  const h = harness({ onStateChange: event => { if (event.to === 'stopping') clock.time += 15; } }); clock = h.clock;
+  h.child.onKill = () => false;
+  h.supervisor.launch({ command: 'synthetic' }); h.child.start();
+  const close = h.supervisor.close();
+  await clock.advance(0); assert.deepEqual(h.child.signals, ['SIGTERM', 'SIGKILL']);
+  await clock.advance(14); assert.equal(h.supervisor.state, 'stopping');
+  await clock.advance(1); await assert.rejects(close, CleanupError);
+  assert.equal(clock.now(), 30); assertReleased(assert, h);
+});
+
+test('diagnostic allowlisting reads a mutable error property only once', async () => {
+  let reads = 0;
+  const error = { get code() { return ++reads === 1 ? 'ENOENT' : 'private-value'; } };
+  const h = harness({}, () => { throw error; });
+  h.supervisor.launch({ command: 'synthetic' });
+  await assert.rejects(h.supervisor.waitUntilHealthy(), StartupError);
+  assert.equal(reads, 1);
+  assert.equal(h.supervisor.lastError.context.systemCode, 'ENOENT');
+  assert.doesNotMatch(JSON.stringify(await h.supervisor.closed), /private-value/);
+});

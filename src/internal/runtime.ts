@@ -1,7 +1,9 @@
 import { spawn, type ChildProcess } from 'node:child_process';
+import { performance } from 'node:perf_hooks';
 import type { LaunchOptions } from '../types.js';
 
 export interface Clock {
+  now(): number;
   setTimeout(callback: () => void, milliseconds: number): unknown;
   clearTimeout(timer: unknown): void;
 }
@@ -12,6 +14,7 @@ export interface Runtime {
 }
 export const nodeRuntime: Runtime = {
   clock: {
+    now: () => performance.now(),
     setTimeout: (callback, milliseconds) => setTimeout(callback, milliseconds),
     clearTimeout: timer => clearTimeout(timer as NodeJS.Timeout),
   },
