@@ -1,0 +1,51 @@
+{
+  "name": "browserguard",
+  "version": "0.1.0",
+  "description": "Owned child-process supervision with health checks, deadlines, and bounded shutdown.",
+  "type": "module",
+  "license": "MIT",
+  "author": "SiedahmedM",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SiedahmedM/browserguard.git"
+  },
+  "bugs": {
+    "url": "https://github.com/SiedahmedM/browserguard/issues"
+  },
+  "homepage": "https://github.com/SiedahmedM/browserguard#readme",
+  "engines": {
+    "node": ">=24"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint src tests examples scripts",
+    "test": "npm run build && node --test --test-timeout=30000 tests/*.test.mjs",
+    "coverage": "npm run build && node --test --experimental-test-coverage --test-coverage-include=dist/**/*.js --test-timeout=30000 tests/*.test.mjs",
+    "check": "npm run lint && npm run typecheck && npm test",
+    "example": "npm run build && node examples/synthetic.mjs",
+    "prepack": "npm run build",
+    "package:check": "npm run build && node scripts/package-check.mjs"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@types/node": "24.19.1",
+    "eslint": "10.12.0",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.71.1"
+  }
+}
