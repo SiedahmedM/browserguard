@@ -8,7 +8,13 @@ TypeScript, Node.js 24 or later, ESM, no runtime dependencies.
 
 ## Try it
 
-The source release is available on GitHub. No npm registry release has been published.
+Install the GitHub release package:
+
+```sh
+npm install https://github.com/SiedahmedM/browserguard/releases/download/v0.1.0/browserguard-0.1.0.tgz
+```
+
+No npm registry release has been published. To build and inspect the source instead:
 
 ```sh
 git clone https://github.com/SiedahmedM/browserguard.git
@@ -19,7 +25,7 @@ npm run example
 npm pack
 ```
 
-Install the resulting package into another project with `npm install /path/to/browserguard-0.1.0.tgz`. TypeScript consumers should have Node.js types installed.
+You can also install the locally built package with `npm install /path/to/browserguard-0.1.0.tgz`. TypeScript consumers should have Node.js types installed.
 
 This example runs an ordinary Node child, so it works without an installed browser:
 
@@ -53,7 +59,7 @@ try {
 
 `launch()` returns immediately. This keeps the session available for cancellation while startup is pending. Without a health callback, readiness means the OS emitted the child's spawn event.
 
-For a browser, provide a probe that establishes readiness for that particular child. [The Chromium example](examples/chromium.mjs) uses an isolated temporary data directory and a local debugging endpoint. It does not navigate or use an existing browser profile.
+For a browser, provide a probe that establishes readiness for that particular child. [The Chromium example](examples/chromium.mjs) uses an isolated temporary data directory and a local debugging endpoint. After building, run `node examples/chromium.mjs /absolute/path/to/chromium`. It does not navigate or use an existing browser profile.
 
 ## Lifecycle contract
 

@@ -32,3 +32,11 @@ Expanded the suite to 74 tests. Windows passes 73 with the documented POSIX-only
 Gitleaks 8.30.1 found no secrets in the staged project. A separate local review found no restricted project identifiers or local machine paths in tracked content, no broken documentation links, and no matching eight-line source/documentation blocks against the read-only reference. That comparison is supporting evidence; the scope and implementation were also reviewed directly.
 
 The new GitHub repository was created privately. Next: commit the independent implementation, run the three-platform CI and full-history scan, then complete the public release review.
+
+## Cross-platform verification and release decision
+
+[CI run 37727697739](https://github.com/SiedahmedM/browserguard/actions/runs/37727697739) passed all jobs. Linux and macOS each pass all 74 tests, including a real child that ignores SIGTERM and requires escalation. Windows passes 73 with the one documented POSIX-only skip. Every platform passes lint, type checking, builds, the synthetic example, and package installation/type checks. The dependency/secret job passes.
+
+The root commit is 12587b5a9888e3d8df0565f4da67bb4a9ce48dad with no parents. Git has no object alternates or shallow boundary, and its only remote is this project's repository. Author metadata uses the maintainer's GitHub noreply address.
+
+Final scope review: 578 production TypeScript lines, zero runtime dependencies, and none of the excluded browser/agent/persistence capabilities. GO for public source publication with the documented cleanup and platform limits. Added a package test that extracts and executes the README quick start to prevent example drift. The GitHub release will include the buildable source and an installable tarball; no npm registry publication is requested.

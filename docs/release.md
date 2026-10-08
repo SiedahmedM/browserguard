@@ -26,6 +26,26 @@ Before publishing a release:
 * Record review results in WORKLOG.md.
 * Obtain maintainer approval for any npm publication. GitHub source publication does not publish a registry package.
 
+## 0.1.0 assessment
+
+GO for public source release with the documented direct-child cleanup boundary. No unresolved release blockers were found. npm registry publication remains a separate decision.
+
+The implementation is 578 TypeScript lines across seven files, with zero runtime dependencies. [The initial complete CI run](https://github.com/SiedahmedM/browserguard/actions/runs/37727697739) passed linting, type checking, coverage tests, the synthetic example, and package checks on all three platforms:
+
+| Check | Result |
+| --- | --- |
+| Linux / Node 24 | 74 tests passed, including real SIGTERM escalation |
+| macOS / Node 24 | 74 tests passed, including real SIGTERM escalation |
+| Windows / Node 24 | 73 passed; one real POSIX-only test skipped; deterministic escalation passed |
+| Local Chrome example | Readiness, direct-child shutdown, and temporary-directory removal passed |
+| Package consumer | Clean tarball install, ESM API, TypeScript declarations, and lifecycle checks passed |
+| Dependencies | npm audit reported zero vulnerabilities |
+| Secrets | Gitleaks 8.30.1 reported no findings in staged content or complete Git history |
+| Provenance | Fresh root commit, no imported parent history, no object alternates or private remote |
+| Content review | No restricted identifiers, private endpoints, local machine paths, or copied source/documentation blocks found |
+
+The public package excludes tests, development tooling, and work logs. A scope review found only ordinary process supervision, with all excluded features listed above still absent. Remaining limitations are deliberate: no process-tree containment, no forced JavaScript cancellation, and no cleanup guarantee after host termination. This is an implementation and release review, not an external security certification.
+
 ## Recreating the repository
 
 Start in an empty directory with independently authored project files. Do not fork or add a private reference repository as a remote.

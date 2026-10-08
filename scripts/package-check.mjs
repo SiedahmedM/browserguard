@@ -33,6 +33,11 @@ try {
     await assert.rejects(import('browserguard/dist/internal/runtime.js'), { code: 'ERR_PACKAGE_PATH_NOT_EXPORTED' });
   `);
   run(join(consumer, 'check.mjs'), [], consumer);
+  const readme = await readFile(join(root, 'README.md'), 'utf8');
+  const quickStart = readme.match(/```js\r?\n([\s\S]*?)```/)?.[1];
+  assert.ok(quickStart, 'README must contain a runnable JavaScript quick start.');
+  await writeFile(join(consumer, 'readme-example.mjs'), quickStart);
+  run(join(consumer, 'readme-example.mjs'), [], consumer);
   await writeFile(join(consumer, 'check.ts'), `
     import { BrowserSupervisor, type BrowserSession, type LifecycleState } from 'browserguard';
     const owner = new BrowserSupervisor({ failureThreshold: 3 });
@@ -53,7 +58,7 @@ try {
   run(join(root, 'node_modules', 'typescript', 'bin', 'tsc'), ['-p', join(consumer, 'tsconfig.json')], consumer);
   const manifest = JSON.parse(await readFile(join(consumer, 'node_modules', 'browserguard', 'package.json'), 'utf8'));
   assert.equal(Object.keys(manifest.dependencies ?? {}).length, 0);
-  console.log('Package verified: ' + packed.files.length + ' files, ' + packed.size + ' compressed bytes; clean install, ESM import, types, lifecycle, and export boundary passed.');
+  console.log('Package verified: ' + packed.files.length + ' files, ' + packed.size + ' compressed bytes; clean install, README example, ESM import, types, lifecycle, and export boundary passed.');
 } finally {
   await rm(temporary, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
 }
